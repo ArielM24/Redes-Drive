@@ -262,3 +262,33 @@ func FillString(retunString string, toLength int) string {
 func GetStr(str string) string{
 	return strings.Replace(str, ":", "", -1)
 }
+
+func LookFiles(conn net.Conn, path string) {
+	paths := Paths(path)
+	np := FillString(strconv.FormatInt(int64(len(paths)),10),64)
+	conn.Write([]byte(np))
+	fmt.Println(np)
+	for _, p := range paths {
+		name := FillString(p,256)
+		conn.Write([]byte(name))
+	}
+}
+
+func ShowFiles(conn net.Conn) {
+	buffNp := make([]byte,64)
+	conn.Read(buffNp)
+	np, _ := strconv.ParseInt(strings.Trim(string(buffNp), ":"), 10, 64)
+	bufferName := make([]byte,256)
+	var i int64
+	if np == 0 {
+		fmt.Println("No files to show!")
+	} else {
+		fmt.Println("Files:")
+	}
+	for i = 0; i < np; i++ {
+		conn.Read(bufferName)
+		name := strings.Trim(string(bufferName),":")
+		fmt.Println(name)
+	}
+	fmt.Println()
+}

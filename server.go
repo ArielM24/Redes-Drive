@@ -2,10 +2,10 @@ package main
 
 import(
 	"fmt"
-	"io"
+	//"io"
 	"net"
 	"os"
-	"strconv"
+	//"strconv"
 	"./drive"
 )
 const sep = os.PathSeparator
@@ -50,6 +50,9 @@ func readOptions(conn net.Conn) {
 		break
 		case 4:
 			deleteFileOp(conn)
+		break
+		case 5:
+			lookOp(conn)
 		break
 		default:
 			fmt.Println("Nothing")
@@ -105,35 +108,9 @@ func downloadOp(conn net.Conn) {
 	
 }
 
-func sendFileToClient(connection net.Conn) {
-	fmt.Println("A client has connected")
-	defer connection.Close()
-	file, errf := os.Open("Carpeta"+string(sep)+"dummyfile.txt")
-	if errf != nil {
-		fmt.Println(errf)
-		return
-	}
-
-	fileInfo, erri := file.Stat()
-	if erri != nil {
-		fmt.Println(errf)
-		return
-	}
-
-	fileSize := drive.FillString(strconv.FormatInt(fileInfo.Size(),10),10)
-	fileName := drive.FillString(fileInfo.Name(),64)
-	fmt.Println("Sending file name and file size!")
-	connection.Write([]byte(fileSize))
-	connection.Write([]byte(fileName))
-	sendBuffer := make([]byte, BUFFERSIZE)
-	fmt.Println("Start sending file!")
-	for {
-		_, errF := file.Read(sendBuffer)
-		if errF == io.EOF {
-			break
-		}
-		connection.Write(sendBuffer)
-	}
-	fmt.Println("File has been sent, closing connection!")
-	return
+func lookOp(conn net.Conn){
+	bufferName := make([]byte,256)
+	conn.Read(bufferName)
+	fileName := drive.GetStr(string(bufferName))
+	drive.LookFiles(conn,fileName)
 }

@@ -2,10 +2,10 @@ package main
 
 import(
 	"fmt"
-	"io"
+	//"io"
 	"net"
 	"os"
-	"strconv"
+	//"strconv"
 	"strings"
 	"./drive"
 )
@@ -28,6 +28,7 @@ func main() {
 		fmt.Println("2 -> dowload file/folder")
 		fmt.Println("3 -> upload file/folder")
 		fmt.Println("4 -> delete file/folder")
+		fmt.Println("5 -> look at file list")
 		fmt.Scanf("%d", &op)
 		switch op {
 		case 0:
@@ -45,42 +46,14 @@ func main() {
 		case 4:
 			deleteFileOp(conn)
 		break
+		case 5:
+			lookOp(conn)
+		break
 		default:
 			fmt.Println("Nothing")
 		break
 		}
 	}
-
-	fmt.Println("Connected to server, start receiving the file name and file size")
-	bufferFileName := make([]byte,64)
-	bufferFileSize := make([]byte,10)
-
-	conn.Read(bufferFileSize)
-	fileSize, _ := strconv.ParseInt(strings.Trim(string(bufferFileSize), ":"), 10, 64)
-
-	conn.Read(bufferFileName)
-	fileName := strings.Trim(string(bufferFileName),":")
-
-	newFile, errn := os.Create(fileName)
-
-	if errn != nil {
-		panic(errn)
-	}
-	defer newFile.Close()
-
-	var receivedBytes int64
-
-	for {
-		if (fileSize - receivedBytes) < BUFFERSIZE {
-			io.CopyN(newFile, conn, (fileSize - receivedBytes))
-			conn.Read(make([]byte, (receivedBytes + BUFFERSIZE) - fileSize))
-			break
-		}
-		io.CopyN(newFile, conn, BUFFERSIZE)
-		receivedBytes += BUFFERSIZE
-	}
-
-	fmt.Println("Received file completely!")
 }
 
 func exitOp(conn net.Conn) {
@@ -139,4 +112,15 @@ func downloadOp(conn net.Conn) {
 	bufferResult := make([]byte,256)
 	conn.Read(bufferResult)
 	fmt.Println(drive.GetStr(string(bufferResult)))
+}
+
+func lookOp(conn net.Conn) {
+	var fileName string 
+	fmt.Println("File/Folder path (use '/' to neested folders):\t")
+	fmt.Scanf("%s", &fileName)
+	fileName = strings.Replace(fileName, "/", string(drive.Sep), -1)
+	conn.Write([]byte{5})
+	conn.Write([]byte(drive.FillString(fileName,256)))
+
+	drive.ShowFiles(conn)
 }
