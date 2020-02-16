@@ -2,15 +2,11 @@ package main
 
 import(
 	"fmt"
-	//"io"
 	"net"
 	"os"
-	//"strconv"
 	"strings"
 	"./drive"
 )
-
-const BUFFERSIZE = 1024
 
 func main() {
 	var op int8

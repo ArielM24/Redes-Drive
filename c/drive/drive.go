@@ -7,7 +7,6 @@ import(
 	"net"
 	"strings"
 	"strconv"
-	//"io"
 )
 
 const Sep = os.PathSeparator
@@ -54,12 +53,10 @@ func getFiles(path string, dir bool) []string{
 		if s.IsDir() {
 			if dir {
 				result = append(result, p)
-				fmt.Println("Fuck", p)
 			} 
 		} else {
 			if !dir {
 				result = append(result, p)
-				fmt.Println("File ",p)
 			}
 		}
 	}
@@ -84,14 +81,13 @@ func DeleteFile(path string) string {
 	}
 }
 
-func MakePaths(path string) string {
+func MakePaths(path string) {
 	MakeDirectories(path)
 	paths := Paths(path)
 	for _, d := range paths {
 		p, _ := filepath.Split(d)
 		MakeDirectories(p)
 	}
-	return "m"
 }
 
 func UploadFile(conn net.Conn, path string) bool {
@@ -100,10 +96,9 @@ func UploadFile(conn net.Conn, path string) bool {
 	uploadPaths(conn, path)
 	nf := FillString(strconv.FormatInt(int64(len(files)),10),64)
 	conn.Write([]byte(nf))
-	fmt.Println(nf)
+	fmt.Println("Uploading files...")
 	for _, f := range files {
 		result = result && upload(conn, f)
-		fmt.Println("f")
 	}
 	return result
 }
@@ -112,10 +107,8 @@ func uploadPaths(conn net.Conn, path string) bool {
 	paths := getFiles(path,true)
 	np := FillString(strconv.FormatInt(int64(len(paths)),10),64)
 	conn.Write([]byte(np))
-	fmt.Println(np)
 	for _, p := range paths {
 		conn.Write([]byte(FillString(p,256)))
-		fmt.Println(FillString(p,256))
 	}
 	return true
 }
@@ -137,12 +130,8 @@ func upload(conn net.Conn, filePath string) bool{
 	fileSize := FillString(strconv.FormatInt(fileInfo.Size(),10),64)
 	fileName := FillString(filePath,256)
 
-	fmt.Println("u s",fileSize)
-	fmt.Println("u n",fileName)
-	fmt.Println("Sending file name and file size!")
 	conn.Write([]byte(fileSize))
 	conn.Write([]byte(fileName))
-	fmt.Println("Start sending file!")
 
 	var np, rest, i int64
 
@@ -156,19 +145,15 @@ func upload(conn net.Conn, filePath string) bool{
 		sendBuffer = make([]byte, BUFFERSIZE)
 		file.Read(sendBuffer)
 		conn.Write(sendBuffer)
-		fmt.Println(string(sendBuffer))
 	}
 
 	if rest > 0 {
 		sendBuffer = make([]byte, rest)
 		file.Read(sendBuffer)
 		conn.Write(sendBuffer)
-		fmt.Println(string(sendBuffer))
 	}
 	
-	fmt.Println("File has been sent, closing connection!")
 	return true
-
 }
 
 func DownloadFile(conn net.Conn, file string) bool {
@@ -178,8 +163,8 @@ func DownloadFile(conn net.Conn, file string) bool {
 
 	conn.Read(buffNf)
 	nf ,_:= strconv.ParseInt(strings.Trim(string(buffNf),":"),10,64)
-	fmt.Println("nf",nf)
 	var i int64
+	fmt.Println("Dowloading files...")
 	for i = 0; i < nf; i++ {
 		download(conn)
 	}
@@ -192,7 +177,6 @@ func downloadPaths(conn net.Conn){
 
 	conn.Read(buffNp)
 	np ,_:= strconv.ParseInt(strings.Trim(string(buffNp),":"),10,64)
-	fmt.Println("np",np)
 	var i int64
 	for i = 0; i < np; i++ {
 		conn.Read(bufferName)
@@ -203,16 +187,13 @@ func downloadPaths(conn net.Conn){
 
 func download(conn net.Conn) bool {
 	r := true
-	fmt.Println("Connected to server, start receiving the file name and file size")
 	bufferFileName := make([]byte,256)
 	bufferFileSize := make([]byte,64)
 
 	conn.Read(bufferFileSize)
 	fileSize, _ := strconv.ParseInt(strings.Trim(string(bufferFileSize), ":"), 10, 64)
-	fmt.Println("d s",fileSize)
 	conn.Read(bufferFileName)
 	fileName := strings.Trim(string(bufferFileName),":")
-	fmt.Println("d n",fileName)
 	p, _ := filepath.Split(fileName)
 	MakeDirectories(p)
 	newFile, errn := os.Create(fileName)
@@ -233,17 +214,14 @@ func download(conn net.Conn) bool {
 		buffReceived = make([]byte, BUFFERSIZE)
 		conn.Read(buffReceived)
 		newFile.Write(buffReceived)
-		fmt.Println(string(buffReceived))
 	}
 
 	if rest > 0 {
 		buffReceived = make([]byte, rest)
 		conn.Read(buffReceived)
 		newFile.Write(buffReceived)
-		fmt.Println(string(buffReceived))
 	}
 
-	fmt.Println("Received file completely!")
 	return r
 }
 
@@ -267,7 +245,6 @@ func LookFiles(conn net.Conn, path string) {
 	paths := Paths(path)
 	np := FillString(strconv.FormatInt(int64(len(paths)),10),64)
 	conn.Write([]byte(np))
-	fmt.Println(np)
 	for _, p := range paths {
 		name := FillString(p,256)
 		conn.Write([]byte(name))

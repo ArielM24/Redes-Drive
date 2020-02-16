@@ -2,14 +2,10 @@ package main
 
 import(
 	"fmt"
-	//"io"
 	"net"
 	"os"
-	//"strconv"
 	"./drive"
 )
-const sep = os.PathSeparator
-const BUFFERSIZE = 1024
 
 func main() {
 	server, errs := net.Listen("tcp",":2000")
@@ -85,7 +81,6 @@ func uploadOp(conn net.Conn) {
 	bufferName := make([]byte,256)
 	conn.Read(bufferName)
 	fileName := drive.GetStr(string(bufferName))
-	fmt.Println("u",fileName)
 	r := drive.DownloadFile(conn,fileName)
 	if r {
 		conn.Write([]byte(drive.FillString("Files upload succesfuly!",256)))
@@ -98,7 +93,6 @@ func downloadOp(conn net.Conn) {
 	bufferName := make([]byte,256)
 	conn.Read(bufferName)
 	fileName := drive.GetStr(string(bufferName))
-	fmt.Println("u",fileName)
 	r := drive.UploadFile(conn,fileName)
 	if r {
 		conn.Write([]byte(drive.FillString("Files donwload succesfuly!",256)))
