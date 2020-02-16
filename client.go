@@ -14,13 +14,13 @@ const BUFFERSIZE = 1024
 
 func main() {
 	var op int8
-	connection, errc := net.Dial("tcp","192.168.100.8:2000")
+	conn, errc := net.Dial("tcp","192.168.100.8:2000")
 	if errc != nil {
 		panic(errc)
 	}
 
-	fmt.Printf("%T", connection)
-	defer connection.Close()
+	fmt.Printf("%T", conn)
+	defer conn.Close()
 
 	for {
 		fmt.Println("Selec an option")
@@ -32,19 +32,19 @@ func main() {
 		fmt.Scanf("%d", &op)
 		switch op {
 		case 0:
-			exitOp(connection)
+			exitOp(conn)
 		break
 		case 1:
-			createFolderOp(connection)
+			createFolderOp(conn)
 		break
 		case 2:
 			fmt.Println("2")
 		break
 		case 3:
-			uploadOp(connection)
+			uploadOp(conn)
 		break
 		case 4:
-			deleteFileOp()
+			deleteFileOp(conn)
 		break
 		default:
 			fmt.Println("Other")
@@ -56,10 +56,10 @@ func main() {
 	bufferFileName := make([]byte,64)
 	bufferFileSize := make([]byte,10)
 
-	connection.Read(bufferFileSize)
+	conn.Read(bufferFileSize)
 	fileSize, _ := strconv.ParseInt(strings.Trim(string(bufferFileSize), ":"), 10, 64)
 
-	connection.Read(bufferFileName)
+	conn.Read(bufferFileName)
 	fileName := strings.Trim(string(bufferFileName),":")
 
 	newFile, errn := os.Create(fileName)
@@ -73,11 +73,11 @@ func main() {
 
 	for {
 		if (fileSize - receivedBytes) < BUFFERSIZE {
-			io.CopyN(newFile, connection, (fileSize - receivedBytes))
-			connection.Read(make([]byte, (receivedBytes + BUFFERSIZE) - fileSize))
+			io.CopyN(newFile, conn, (fileSize - receivedBytes))
+			conn.Read(make([]byte, (receivedBytes + BUFFERSIZE) - fileSize))
 			break
 		}
-		io.CopyN(newFile, connection, BUFFERSIZE)
+		io.CopyN(newFile, conn, BUFFERSIZE)
 		receivedBytes += BUFFERSIZE
 	}
 
@@ -102,12 +102,16 @@ func createFolderOp(conn net.Conn) {
 	fmt.Println(drive.GetStr(string(bufferResult)))
 }
 
-func deleteFileOp() {
+func deleteFileOp(conn net.Conn) {
 	var fileName string
 	fmt.Println("File name (use '/' to neested folders):\t")
 	fmt.Scanf("%s", &fileName)
-	fileName = strings.Replace(fileName, "/", string(drive.Sep), -1)
-	fmt.Println(drive.DeleteFile(fileName))
+	fileName = drive.FillString(strings.Replace(fileName, "/", string(drive.Sep), -1), 256)
+	conn.Write([]byte{4})
+	conn.Write([]byte(fileName))
+	bufferResult := make([]byte,256)
+	conn.Read(bufferResult)
+	fmt.Println(drive.GetStr(string(bufferResult)))
 }
 
 func uploadOp(conn net.Conn) {

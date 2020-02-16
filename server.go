@@ -49,7 +49,7 @@ func readOptions(conn net.Conn) {
 			//uploadOp(connection)
 		break
 		case 4:
-			//deleteFileOp()
+			deleteFileOp(conn)
 		break
 		default:
 			fmt.Println("Other")
@@ -60,11 +60,20 @@ func readOptions(conn net.Conn) {
 	conn.Close()
 }
 
-func createFolderOp(conn net.Conn){
+func createFolderOp(conn net.Conn) {
 	bufferName := make([]byte,256)
 	conn.Read(bufferName)
 	folderName := drive.GetStr(string(bufferName))
 	result := drive.FillString(drive.MakeDirectories("."+string(drive.Sep)+folderName),256)
+	fmt.Println(drive.GetStr(result))
+	conn.Write([]byte(result))
+}
+
+func deleteFileOp(conn net.Conn) {
+	bufferName := make([]byte,256)
+	conn.Read(bufferName)
+	fileName := drive.GetStr(string(bufferName))
+	result := drive.FillString(drive.DeleteFile("."+string(drive.Sep)+fileName),256)
 	fmt.Println(drive.GetStr(result))
 	conn.Write([]byte(result))
 }
