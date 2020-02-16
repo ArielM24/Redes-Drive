@@ -37,7 +37,7 @@ func main() {
 			createFolderOp(conn)
 		break
 		case 2:
-			fmt.Println("2")
+			downloadOp(conn)
 		break
 		case 3:
 			uploadOp(conn)
@@ -46,7 +46,7 @@ func main() {
 			deleteFileOp(conn)
 		break
 		default:
-			fmt.Println("Other")
+			fmt.Println("Nothing")
 		break
 		}
 	}
@@ -121,6 +121,20 @@ func uploadOp(conn net.Conn) {
 	conn.Write([]byte{3})
 	conn.Write([]byte(drive.FillString(fileName,256)))
 	drive.UploadFile(conn,fileName)
+
+	bufferResult := make([]byte,256)
+	conn.Read(bufferResult)
+	fmt.Println(drive.GetStr(string(bufferResult)))
+}
+
+func downloadOp(conn net.Conn) {
+	var fileName string
+	fmt.Println("File/Folder path (use '/' to neested folders):\t")
+	fmt.Scanf("%s", &fileName)
+	fileName = strings.Replace(fileName, "/", string(drive.Sep), -1)
+	conn.Write([]byte{2})
+	conn.Write([]byte(drive.FillString(fileName,256)))
+	drive.DownloadFile(conn,fileName)
 
 	bufferResult := make([]byte,256)
 	conn.Read(bufferResult)

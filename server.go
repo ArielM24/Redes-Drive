@@ -43,7 +43,7 @@ func readOptions(conn net.Conn) {
 			createFolderOp(conn)
 		break
 		case 2:
-			fmt.Println("2")
+			downloadOp(conn)
 		break
 		case 3:
 			uploadOp(conn)
@@ -52,7 +52,7 @@ func readOptions(conn net.Conn) {
 			deleteFileOp(conn)
 		break
 		default:
-			fmt.Println("Other")
+			fmt.Println("Nothing")
 		break
 		}
 	}
@@ -85,10 +85,24 @@ func uploadOp(conn net.Conn) {
 	fmt.Println("u",fileName)
 	r := drive.DownloadFile(conn,fileName)
 	if r {
-		conn.Write([]byte(drive.FillString("Files uploaded succesfuly!",256)))
+		conn.Write([]byte(drive.FillString("Files upload succesfuly!",256)))
 	} else {
 		conn.Write([]byte(drive.FillString("Error while uploading files!",256)))
 	}
+}
+
+func downloadOp(conn net.Conn) {
+	bufferName := make([]byte,256)
+	conn.Read(bufferName)
+	fileName := drive.GetStr(string(bufferName))
+	fmt.Println("u",fileName)
+	r := drive.UploadFile(conn,fileName)
+	if r {
+		conn.Write([]byte(drive.FillString("Files donwload succesfuly!",256)))
+	} else {
+		conn.Write([]byte(drive.FillString("Error while downloading files!",256)))
+	}
+	
 }
 
 func sendFileToClient(connection net.Conn) {
