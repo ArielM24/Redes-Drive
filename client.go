@@ -18,6 +18,8 @@ func main() {
 	if errc != nil {
 		panic(errc)
 	}
+
+	fmt.Printf("%T", connection)
 	defer connection.Close()
 
 	for {
@@ -34,13 +36,13 @@ func main() {
 			os.Exit(0)
 		break
 		case 1:
-			createFolderOp()
+			createFolderOp(connection)
 		break
 		case 2:
 			fmt.Println("2")
 		break
 		case 3:
-			fmt.Println("3")
+			uploadOp(connection)
 		break
 		case 4:
 			deleteFileOp()
@@ -83,12 +85,16 @@ func main() {
 	fmt.Println("Received file completely!")
 }
 
-func createFolderOp() {
+func createFolderOp(conn net.Conn) {
 	var folderName string
 	fmt.Print("Folder name (use '/' to neested folders):\t")
 	fmt.Scanf("%s", &folderName)
-	folderName = strings.Replace(folderName, "/", string(drive.Sep), -1)
-	fmt.Println(drive.MakeDirectories("./"+folderName))
+	folderName = drive.FillString(strings.Replace(folderName, "/", string(drive.Sep), -1),256)
+	conn.Write([]byte{1})
+	conn.Write([]byte(folderName))
+	bufferResult := make([]byte,256)
+	conn.Read(bufferResult)
+	fmt.Println(drive.GetStr(string(bufferResult)))
 }
 
 func deleteFileOp() {
@@ -97,4 +103,12 @@ func deleteFileOp() {
 	fmt.Scanf("%s", &fileName)
 	fileName = strings.Replace(fileName, "/", string(drive.Sep), -1)
 	fmt.Println(drive.DeleteFile(fileName))
+}
+
+func uploadOp(conn net.Conn) {
+	var fileName string
+	fmt.Println("File/Folder path (use '/' to neested folders):\t")
+	fmt.Scanf("%s", &fileName)
+	fileName = strings.Replace(fileName, "/", string(drive.Sep), -1)
+	fmt.Println(drive.UploadFile(conn, fileName))
 }

@@ -12,7 +12,6 @@ const sep = os.PathSeparator
 const BUFFERSIZE = 1024
 
 func main() {
-	fmt.Println(drive.Sep)
 	server, errs := net.Listen("tcp",":2000")
 
 	if errs != nil {
@@ -30,8 +29,46 @@ func main() {
 			os.Exit(1)
 		}
 		fmt.Println("Client connected")
-		go sendFileToClient(connection)
+		go readOptions(connection)
 	}
+}
+
+func readOptions(conn net.Conn) {
+	var op int8
+	bufferOption := make([]byte,1)
+	conn.Read(bufferOption)
+	op = int8(bufferOption[0])
+	switch op {
+		case 0:
+			fmt.Println("Connection finished!")
+			conn.Close()
+		break
+		case 1:
+			fmt.Println("Creating folder")
+			createFolderOp(conn)
+		break
+		case 2:
+			fmt.Println("2")
+		break
+		case 3:
+			//uploadOp(connection)
+		break
+		case 4:
+			//deleteFileOp()
+		break
+		default:
+			fmt.Println("Other")
+		break
+		}
+}
+
+func createFolderOp(conn net.Conn){
+	bufferName := make([]byte,256)
+	conn.Read(bufferName)
+	folderName := drive.GetStr(string(bufferName))
+	result := drive.FillString(drive.MakeDirectories("."+string(drive.Sep)+folderName),256)
+	fmt.Println(drive.GetStr(result))
+	conn.Write([]byte(result))
 }
 
 func sendFileToClient(connection net.Conn) {
@@ -49,8 +86,8 @@ func sendFileToClient(connection net.Conn) {
 		return
 	}
 
-	fileSize := fillString(strconv.FormatInt(fileInfo.Size(),10),10)
-	fileName := fillString(fileInfo.Name(),64)
+	fileSize := drive.FillString(strconv.FormatInt(fileInfo.Size(),10),10)
+	fileName := drive.FillString(fileInfo.Name(),64)
 	fmt.Println("Sending file name and file size!")
 	connection.Write([]byte(fileSize))
 	connection.Write([]byte(fileName))
@@ -65,16 +102,4 @@ func sendFileToClient(connection net.Conn) {
 	}
 	fmt.Println("File has been sent, closing connection!")
 	return
-}
-
-func fillString(retunString string, toLength int) string {
-	for {
-		lengtString := len(retunString)
-		if lengtString < toLength {
-			retunString = retunString + ":"
-			continue
-		}
-		break
-	}
-	return retunString
 }
