@@ -46,7 +46,7 @@ func readOptions(conn net.Conn) {
 			fmt.Println("2")
 		break
 		case 3:
-			//uploadOp(connection)
+			uploadOp(conn)
 		break
 		case 4:
 			deleteFileOp(conn)
@@ -64,7 +64,7 @@ func createFolderOp(conn net.Conn) {
 	bufferName := make([]byte,256)
 	conn.Read(bufferName)
 	folderName := drive.GetStr(string(bufferName))
-	result := drive.FillString(drive.MakeDirectories("."+string(drive.Sep)+folderName),256)
+	result := drive.FillString(drive.MakeDirectories(folderName),256)
 	fmt.Println(drive.GetStr(result))
 	conn.Write([]byte(result))
 }
@@ -73,9 +73,22 @@ func deleteFileOp(conn net.Conn) {
 	bufferName := make([]byte,256)
 	conn.Read(bufferName)
 	fileName := drive.GetStr(string(bufferName))
-	result := drive.FillString(drive.DeleteFile("."+string(drive.Sep)+fileName),256)
+	result := drive.FillString(drive.DeleteFile(fileName),256)
 	fmt.Println(drive.GetStr(result))
 	conn.Write([]byte(result))
+}
+
+func uploadOp(conn net.Conn) {
+	bufferName := make([]byte,256)
+	conn.Read(bufferName)
+	fileName := drive.GetStr(string(bufferName))
+	fmt.Println("u",fileName)
+	r := drive.DownloadFile(conn,fileName)
+	if r {
+		conn.Write([]byte(drive.FillString("Files uploaded succesfuly!",256)))
+	} else {
+		conn.Write([]byte(drive.FillString("Error while uploading files!",256)))
+	}
 }
 
 func sendFileToClient(connection net.Conn) {

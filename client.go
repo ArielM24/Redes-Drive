@@ -19,7 +19,6 @@ func main() {
 		panic(errc)
 	}
 
-	fmt.Printf("%T", conn)
 	defer conn.Close()
 
 	for {
@@ -119,5 +118,11 @@ func uploadOp(conn net.Conn) {
 	fmt.Println("File/Folder path (use '/' to neested folders):\t")
 	fmt.Scanf("%s", &fileName)
 	fileName = strings.Replace(fileName, "/", string(drive.Sep), -1)
-	fmt.Println(drive.UploadFile(conn, fileName))
+	conn.Write([]byte{3})
+	conn.Write([]byte(drive.FillString(fileName,256)))
+	drive.UploadFile(conn,fileName)
+
+	bufferResult := make([]byte,256)
+	conn.Read(bufferResult)
+	fmt.Println(drive.GetStr(string(bufferResult)))
 }

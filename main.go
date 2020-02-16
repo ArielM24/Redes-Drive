@@ -2,24 +2,23 @@ package main
 
 import(
 	"os"
-	"path/filepath"
-	"io/ioutil"
+	"fmt"
 )
 
 
 func main() {
-	fileName := "/home/ariel/Desktop/A/B/algo.txt"
-	filePath, _ := filepath.Split(fileName)
-	errm := os.MkdirAll(filePath, os.ModePerm)
-	if errm != nil {
-		panic(errm)
-	}
-	newFile, err := os.Create(fileName)
-	if err != nil {
-		panic(err)
-	}
-	defer newFile.Close()
-	ioutil.WriteFile(fileName, []byte("algo"), 0644)
+	fileName := "/home/ariel/Desktop/o"
+	f, e := os.Create(fileName)
+
+	fmt.Println(e)
+	//bufRead := make([]byte,1024)
+
+	i, er := f.Write([]byte("hola "))
+	fmt.Println(i,er)
+
+	i, er = f.Write([]byte("mundo"))
+	fmt.Println(i,er)
 }
+
 
 
