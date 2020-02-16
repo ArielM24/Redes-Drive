@@ -39,7 +39,20 @@ func Paths(path string) []string {
 	return names
 }
 
-func MakeDirectories(path string) {
+func MakeDirectories(path string) string {
 	errm := os.MkdirAll(path, os.ModePerm)
-	ExitOnError(errm)
+	if errm != nil {
+		return "Error while creating directories"
+	} else {
+		return "Directories created succesfully"
+	}
+}
+
+func DeleteFile(path string) string {
+	errr := os.RemoveAll(path)
+	if errr != nil {
+		return "Error while deleting directories"
+	} else {
+		return "File deleted succesfully"
+	}
 }

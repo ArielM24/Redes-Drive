@@ -43,7 +43,7 @@ func main() {
 			fmt.Println("3")
 		break
 		case 4:
-			fmt.Println("4")
+			deleteFileOp()
 		break
 		default:
 			fmt.Println("Other")
@@ -85,9 +85,16 @@ func main() {
 
 func createFolderOp() {
 	var folderName string
-	fmt.Println("Folder name (use '/' to neested folders):")
+	fmt.Print("Folder name (use '/' to neested folders):\t")
 	fmt.Scanf("%s", &folderName)
 	folderName = strings.Replace(folderName, "/", string(drive.Sep), -1)
+	fmt.Println(drive.MakeDirectories("./"+folderName))
+}
 
-	drive.MakeDirectories("./"+folderName)
+func deleteFileOp() {
+	var fileName string
+	fmt.Println("File name (use '/' to neested folders):\t")
+	fmt.Scanf("%s", &fileName)
+	fileName = strings.Replace(fileName, "/", string(drive.Sep), -1)
+	fmt.Println(drive.DeleteFile(fileName))
 }
