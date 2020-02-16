@@ -6,12 +6,14 @@ import(
 	"net"
 	"os"
 	"strconv"
+	"./drive"
 )
-
+const sep = os.PathSeparator
 const BUFFERSIZE = 1024
 
 func main() {
-	server, errs := net.Listen("tcp","192.168.100.8:2000")
+	fmt.Println(drive.Sep)
+	server, errs := net.Listen("tcp",":2000")
 
 	if errs != nil {
 		fmt.Println("Error listening: ",errs)
@@ -35,7 +37,7 @@ func main() {
 func sendFileToClient(connection net.Conn) {
 	fmt.Println("A client has connected")
 	defer connection.Close()
-	file, errf := os.Open("dummyfile.txt")
+	file, errf := os.Open("Carpeta"+string(sep)+"dummyfile.txt")
 	if errf != nil {
 		fmt.Println(errf)
 		return
