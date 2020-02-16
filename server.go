@@ -18,8 +18,6 @@ func main() {
 		fmt.Println("Error listening: ",errs)
 		os.Exit(1)
 	}
-
-	defer server.Close()
 	fmt.Println("Server started! Waiting for connections...")
 
 	for {
@@ -29,22 +27,19 @@ func main() {
 			os.Exit(1)
 		}
 		fmt.Println("Client connected")
-		go readOptions(connection)
+		readOptions(connection)
 	}
 }
 
 func readOptions(conn net.Conn) {
-	var op int8
+	var op int8 = 5
 	bufferOption := make([]byte,1)
-	conn.Read(bufferOption)
-	op = int8(bufferOption[0])
-	switch op {
-		case 0:
-			fmt.Println("Connection finished!")
-			conn.Close()
-		break
+	for op != 0 {
+		conn.Read(bufferOption)
+		op = int8(bufferOption[0])
+		fmt.Println(op)
+		switch op {
 		case 1:
-			fmt.Println("Creating folder")
 			createFolderOp(conn)
 		break
 		case 2:
@@ -60,6 +55,9 @@ func readOptions(conn net.Conn) {
 			fmt.Println("Other")
 		break
 		}
+	}
+	fmt.Println("Connection finished!")
+	conn.Close()
 }
 
 func createFolderOp(conn net.Conn){

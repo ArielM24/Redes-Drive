@@ -32,8 +32,7 @@ func main() {
 		fmt.Scanf("%d", &op)
 		switch op {
 		case 0:
-			fmt.Println("See you!")
-			os.Exit(0)
+			exitOp(connection)
 		break
 		case 1:
 			createFolderOp(connection)
@@ -83,6 +82,12 @@ func main() {
 	}
 
 	fmt.Println("Received file completely!")
+}
+
+func exitOp(conn net.Conn) {
+	fmt.Println("See you!")
+	conn.Write([]byte{0})
+	os.Exit(0)
 }
 
 func createFolderOp(conn net.Conn) {
