@@ -45,6 +45,27 @@ func Paths(path string) []string {
 	return names
 }
 
+func getFiles(path string, dir bool) []string{
+	paths := Paths(path)
+	result := make([]string,0)
+	for _, p := range paths {
+		f, _ := os.Open(p)
+		s, _ := f.Stat()
+		if s.IsDir() {
+			if dir {
+				result = append(result, p)
+				fmt.Println("Fuck", p)
+			} 
+		} else {
+			if !dir {
+				result = append(result, p)
+				fmt.Println("File ",p)
+			}
+		}
+	}
+	return result
+}
+
 func MakeDirectories(path string) string {
 	errm := os.MkdirAll(path, os.ModePerm)
 	if errm != nil {
@@ -74,30 +95,29 @@ func MakePaths(path string) string {
 }
 
 func UploadFile(conn net.Conn, path string) bool {
-	paths := Paths(path)
-	fmt.Println("U",paths)
+	files := getFiles(path,false)
 	result := true
-	for _, p := range paths {
-		fi, erri := os.Open(p)
-		if erri != nil {
-			return false
-		}
-		fs, errs := fi.Stat()
-		if errs != nil {
-			return false
-		}
-		if !fs.IsDir() {
-			result = result && upload(conn, p)
-		} else {
-			uploadPath(conn, p)
-		}
-		fmt.Println("a")
+	uploadPaths(conn, path)
+	nf := FillString(strconv.FormatInt(int64(len(files)),10),64)
+	conn.Write([]byte(nf))
+	fmt.Println(nf)
+	for _, f := range files {
+		result = result && upload(conn, f)
+		fmt.Println("f")
 	}
 	return result
 }
 
-func uploadPath(conn net.Conn, path string) {
-	
+func uploadPaths(conn net.Conn, path string) bool {
+	paths := getFiles(path,true)
+	np := FillString(strconv.FormatInt(int64(len(paths)),10),64)
+	conn.Write([]byte(np))
+	fmt.Println(np)
+	for _, p := range paths {
+		conn.Write([]byte(FillString(p,256)))
+		fmt.Println(FillString(p,256))
+	}
+	return true
 }
 
 func upload(conn net.Conn, filePath string) bool{
@@ -152,18 +172,36 @@ func upload(conn net.Conn, filePath string) bool{
 }
 
 func DownloadFile(conn net.Conn, file string) bool {
-	MakePaths(file)
-	paths := Paths(file)
-	fmt.Println("D",paths)
-	result := true
-	for _, p := range paths {
-		fmt.Println("aaa ",p)
-		result = result && download(conn, p)
+	downloadPaths(conn)
+
+	buffNf := make([]byte,64)
+
+	conn.Read(buffNf)
+	nf ,_:= strconv.ParseInt(strings.Trim(string(buffNf),":"),10,64)
+	fmt.Println("nf",nf)
+	var i int64
+	for i = 0; i < nf; i++ {
+		download(conn)
 	}
-	return result
+	return true
 }
 
-func download(conn net.Conn, file string) bool {
+func downloadPaths(conn net.Conn){
+	buffNp := make([]byte,64)
+	bufferName := make([]byte,256)
+
+	conn.Read(buffNp)
+	np ,_:= strconv.ParseInt(strings.Trim(string(buffNp),":"),10,64)
+	fmt.Println("np",np)
+	var i int64
+	for i = 0; i < np; i++ {
+		conn.Read(bufferName)
+		name := strings.Trim(string(bufferName),":")
+		os.MkdirAll(name, os.ModePerm)
+	}
+}
+
+func download(conn net.Conn) bool {
 	r := true
 	fmt.Println("Connected to server, start receiving the file name and file size")
 	bufferFileName := make([]byte,256)
